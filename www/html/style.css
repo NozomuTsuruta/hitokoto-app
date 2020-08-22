@@ -1,0 +1,14 @@
+.header {
+    color: #000;
+}
+
+.required {
+    background: #993355;
+    color: #FFF;
+    margin-left: 5px;
+}
+
+.error {
+    color: #993355;
+    border: 1px solid #993355;
+}
