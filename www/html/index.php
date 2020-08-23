@@ -1,5 +1,6 @@
 <?php
 session_start();
+require('dbconnect.php');
 
 if(!empty($_POST)) {
     if($_POST['name']===''){
@@ -14,6 +15,21 @@ if(!empty($_POST)) {
     if($_POST['password']===''){
         $error['password']='blank';
     }
+    $fileName=$_FILES['image']['name'];
+    if(!empty($fileName)){
+        $ext=substr($fileName,-3);
+        if($ext != 'jpg'&& $ext != 'gif'){
+            $error['image']='type';
+        }
+    }
+    if(empty($error)){
+        $member=$db->prepare('SELECT COUNT(*) AS cnt FROM members WHERE email=?');
+        $member->execute(array($_POST['email']));
+        $record = $member->fetch();
+        if($record['cnt'] > 0){
+            $error['email']='duplicate';
+        }
+    }
     if(empty($error)){
         $image=date('YmdHis').$_FILES['image']['name'];
         move_uploaded_file($_FILES['image']['tmp_name'],'./member_picture/'.$image);    
@@ -23,13 +39,8 @@ if(!empty($_POST)) {
         exit();
     }
 }
-$fileName=$_FILES['image']['name'];
-if(!empty($fileName)){
-    $ext=substr($fileName,-3);
-    if($ext != 'jpg'&& $ext != 'gif'){
-        $error['image']='type';
-    }
-}
+
+
 if ($_REQUEST['action']=='rewrite') {
     $_POST=$_SESSION['join'];
     $error['rewrite']=true;
@@ -38,6 +49,8 @@ if ($_REQUEST['action']=='rewrite') {
 ?>
 <?php require('header.php')?>
 <p>次のフォームに必要事項をご記入ください。</p>
+<p>すでにアカウントをお持ちの方はこちらからどうぞ。</p>
+    <p>&raquo;<a href="login.php">ログインする</a></p>
 <form action="" method="post" enctype="multipart/form-data">
     <dl>
         <dt>ニックネーム<span class="required">必須</span></dt>
@@ -47,8 +60,11 @@ if ($_REQUEST['action']=='rewrite') {
         <?php endif; ?>
         <dt>メールアドレス<span class="required">必須</span></dt>
         <dd><input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email'],ENT_QUOTES); ?>"></dd>
-        <?php if($error['name']=='blank'):?>
+        <?php if($error['email']=='blank'):?>
         <p class="error">* メールアドレスを入力してください</p>
+        <?php endif; ?>
+        <?php if($error['email']=='duplicate'):?>
+        <p class="error">* 指定されたメールアドレスは既に登録されています</p>
         <?php endif; ?>
         <dt>パスワード<span class="required">必須</span></dt>
         <dd><input type="password" name="password" size="10" maxlength="20" value="<?php echo htmlspecialchars($_POST['password'],ENT_QUOTES); ?>"></dd>
